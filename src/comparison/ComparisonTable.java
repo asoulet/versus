@@ -259,7 +259,7 @@ public class ComparisonTable {
             for (String entity : entities) {
                 outfilename += entity.substring(entity.lastIndexOf("/") + 1) + "-";
             }
-            outfilename += ProgOpts.get(OptKeys.THRESHOLD);
+            outfilename += ProgOpts.get(OptKeys.THRESHOLD) + ".txt";
             try {
                 logger.info("will print output to " + outfilename);
                 PrintStream o = new PrintStream(new File(outfilename));
