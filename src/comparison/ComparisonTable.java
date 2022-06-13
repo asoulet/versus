@@ -263,9 +263,13 @@ public class ComparisonTable {
         // if output shall go to file, redirect System.out to it
         PrintStream console = System.out;   // store current System.out in case we write to file below
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
+            String id;
+            String label;
             String outfilename = ProgOpts.get(OptKeys.DIRECTORY) + "/";
             for (String entity : entities) {
-                outfilename += entity.substring(entity.lastIndexOf("/") + 1) + "-";
+                id = FeatureComparison.getId(entity);
+                label = FeatureComparison.getLabel(entity).replaceAll("[^a-zA-Z0-9_-]+", "-");
+                outfilename += id + "--" + label + "__";
             }
             outfilename += ProgOpts.get(OptKeys.THRESHOLD);
             if (ProgOpts.get(OptKeys.MARKDOWN).equals("0")) {
@@ -317,6 +321,7 @@ public class ComparisonTable {
 
         System.out.println("* #Errors: " + Versus.getErrorNumber());
         System.out.println("* #Queries: " + Versus.getQueryNumber());
+        System.out.println("* Threshold/Gamma: " + ProgOpts.get(OptKeys.THRESHOLD));
 
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
             // restore System.out in case it had been changed
