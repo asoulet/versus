@@ -16,7 +16,7 @@ public class VersusTest {
         // parse program options
         args = ProgOpts.commandLineOptions(args);
         double threshold = Double.parseDouble(ProgOpts.get(OptKeys.THRESHOLD));
-
+        Versus.ENDPOINT = ProgOpts.get(OptKeys.ENDPOINT);
         logger.info("endpoint: '" + ProgOpts.get(OptKeys.ENDPOINT) + "'");
         logger.info("threshold: " + threshold);
 
@@ -31,10 +31,10 @@ public class VersusTest {
             ct.generate(threshold);
         } else {
             // Wikidata
-            ct.versus("Q16766305").versus("Q19841877").versus("Q111967621").generate(threshold); // Atom editor vs. VSCode vs. VCodium
             ct.versus("Q16766305").versus("Q19841877").generate(threshold);
             ct.versus("Q16766305").versus("Q111967621").generate(threshold);
             ct.versus("Q19841877").versus("Q111967621").generate(threshold);
+            ct.versus("Q16766305").versus("Q19841877").versus("Q111967621").generate(threshold); // Atom editor vs. VSCode vs. VCodium
             //ct.versus("Q7259").versus("Q7251").generate(threshold); // Lovelace vs Turing
             //ct.versus("Q7259").versus("Q7251").versus("Q11641").generate(threshold); // Lovelace vs Turing vs Hopper
             //ct.versus("Q215819").versus("Q185524").versus("Q850").versus("Q192490").generate(threshold); // SQLServer vs Oracle vs MySQL vs PostgreSQL
