@@ -274,7 +274,7 @@ public class ComparisonTable {
                 outfilename += ".md";
             }
             try {
-                logger.info("will print output to " + outfilename);
+                logger.info("will print output to file '" + outfilename + "'");
                 PrintStream o = new PrintStream(new File(outfilename));
                 System.setOut(o);
             } catch (FileNotFoundException ex) {
@@ -302,9 +302,13 @@ public class ComparisonTable {
             line();
         }
 
-        System.out.println("\nDuration: "
+        System.out.println("\n* Duration: "
                 + TimeUnit.MILLISECONDS.toSeconds(enddate.getTime() - startdate.getTime()) + " seconds "
                 + "(" + startdate + " - " + enddate + ")");
+
+        System.out.println("* #Errors: " + Versus.getErrorNumber());
+        System.out.println("* #Queries: " + Versus.getQueryNumber());
+
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
             // restore System.out in case it had been changed
             System.setOut(console);
