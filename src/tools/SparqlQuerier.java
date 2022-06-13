@@ -53,7 +53,7 @@ public abstract class SparqlQuerier {
         try {
             properties.load(new FileInputStream(filename));
         } catch (FileNotFoundException e) {
-            logger.error(e, e);
+            logger.warn(e);
         } catch (IOException e) {
             logger.error(e, e);
         }

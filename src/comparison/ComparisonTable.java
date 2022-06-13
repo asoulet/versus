@@ -8,9 +8,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.query.QuerySolution;
 import org.apache.log4j.Logger;
@@ -32,6 +34,8 @@ public class ComparisonTable {
     private ArrayList<FeatureComparison> removedFeatureComparisons = new ArrayList<FeatureComparison>();
     private int count;
     private Properties configuration = new Properties();
+    private Date startdate;
+    private Date enddate;
 
     public ComparisonTable() {
         try {
@@ -124,9 +128,13 @@ public class ComparisonTable {
     public void generate(double threshold) {
         logger.info("================================");
         logger.info("comparing entities: " + String.join(", ", entities));
+        startdate = new Date();
+        System.out.println(startdate);
         computeContexts();
         computeFeatureComparisons();
         selectFeatureComparisons(threshold);
+        enddate = new Date();
+        System.out.println(enddate);
     }
 
     private void selectFeatureComparisons(double threshold) {
@@ -255,17 +263,24 @@ public class ComparisonTable {
         // if output shall go to file, redirect System.out to it
         PrintStream console = System.out;   // store current System.out in case we write to file below
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
-            String outfilename = "";
+            String outfilename = ProgOpts.get(OptKeys.DIRECTORY) + "/";
             for (String entity : entities) {
                 outfilename += entity.substring(entity.lastIndexOf("/") + 1) + "-";
             }
-            outfilename += ProgOpts.get(OptKeys.THRESHOLD) + ".txt";
+            outfilename += ProgOpts.get(OptKeys.THRESHOLD);
+            if (ProgOpts.get(OptKeys.MARKDOWN).equals("0")) {
+                outfilename += ".txt";
+            } else {
+                outfilename += ".md";
+            }
             try {
                 logger.info("will print output to " + outfilename);
                 PrintStream o = new PrintStream(new File(outfilename));
                 System.setOut(o);
             } catch (FileNotFoundException ex) {
-                logger.warn(ex);
+                System.setOut(console);
+                logger.warn(ex, ex);
+                System.exit(2);
             }
         }
 
@@ -275,11 +290,21 @@ public class ComparisonTable {
             System.out.print(" | " + FeatureComparison.left(FeatureComparison.getLabel(entity) + " (" + FeatureComparison.getId(entity) + ")", FeatureComparison.CHAR_NUMBER));
         }
         System.out.println(" |");
+        if (ProgOpts.get(OptKeys.MARKDOWN).equals("1")) {
+            for (int i = 0; i <= entities.size(); i++) {
+                System.out.print("|---");
+            }
+            System.out.println("|---"); // final column for crl
+        }
         line();
         for (FeatureComparison fc : featureComparisons) {
             fc.show(entities);
             line();
         }
+
+        System.out.println("\nDuration: "
+                + TimeUnit.MILLISECONDS.toSeconds(enddate.getTime() - startdate.getTime()) + " seconds "
+                + "(" + startdate + " - " + enddate + ")");
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
             // restore System.out in case it had been changed
             System.setOut(console);
@@ -288,6 +313,10 @@ public class ComparisonTable {
     }
 
     private void line() {
+        if (ProgOpts.get(OptKeys.MARKDOWN).equals("1")) {
+            return;
+        }
+
         System.out.print("+" + FeatureComparison.line(FeatureComparison.CHAR_NUMBER + 2) + "+");
         for (int i = 0; i < entities.size(); i++) {
             System.out.print(FeatureComparison.line(FeatureComparison.CHAR_NUMBER + 2) + "+");
