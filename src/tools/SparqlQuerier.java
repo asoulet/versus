@@ -137,7 +137,7 @@ public abstract class SparqlQuerier {
                             logger.warn(e + " => " + tempo + " (" + queryId + ") " + queryStr);
                             logger.error("abort query" + " (" + queryId + ")");
                             done = true;
-                            throw e;
+                            //throw e;
                         }
                     } while (!done);
                     status = SparqlStatus.RECEIVE;
