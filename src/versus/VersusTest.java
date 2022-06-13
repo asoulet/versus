@@ -13,6 +13,8 @@ public class VersusTest {
     public static void main(String[] args) {
         logger.info(Versus.NAME + " " + Versus.VERSION);
 
+        ComparisonTable ct;
+
         // parse program options
         args = ProgOpts.commandLineOptions(args);
         double threshold = Double.parseDouble(ProgOpts.get(OptKeys.THRESHOLD));
@@ -21,17 +23,18 @@ public class VersusTest {
         logger.info("threshold: " + threshold);
 
 //        Versus.resetLastTime();
-        ComparisonTable ct = new ComparisonTable();
-
         // if items are given as arguments, compare these, else the examples below
         if (args.length > 0) {
+            ct = new ComparisonTable();
             for (String arg : args) {
                 ct = ct.versus(arg);
             }
             ct.generate(threshold);
+            ct.show();
         } else {
             // Wikidata examples
 
+            ct = new ComparisonTable();
             ct.versus("Q1406").versus("Q388").generate(threshold); // Windows vs Linux
             ct.show();
 
