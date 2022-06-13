@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import options.ProgOpts;
 
 import org.apache.log4j.Logger;
 
@@ -135,7 +136,11 @@ public class FeatureComparison {
     public String row(ArrayList<String> entities, int r, boolean numerical) {
         String str = "| ";
         if (r == 0) {
-            str += right((numerical ? "#" : "") + getLabel(complexProperty.getUri().replace("prop/direct", "entity")) + " (" + getId(complexProperty.getUri()) + ")", CHAR_NUMBER);
+            if (ProgOpts.get(ProgOpts.OptKeys.MARKDOWN).equals("1")) {
+                str += right((numerical ? "#" : "") + getLabel(complexProperty.getUri().replace("prop/direct", "entity")) + " ([" + getId(complexProperty.getUri()) + "]" + "(" + complexProperty.getUri() + "))", CHAR_NUMBER);
+            } else {
+                str += right((numerical ? "#" : "") + getLabel(complexProperty.getUri().replace("prop/direct", "entity")) + " (" + getId(complexProperty.getUri()) + ")", CHAR_NUMBER);
+            }
         } else {
             str += space("", CHAR_NUMBER);
         }
@@ -144,7 +149,12 @@ public class FeatureComparison {
             ArrayList<String> objects = entityObjects.get(entity);
             if (objects != null && r < objects.size()) {
                 if (!numerical) {
-                    str += left(getLabel(objects.get(r)) + " (" + getId(objects.get(r)) + ")", CHAR_NUMBER);
+                    if (ProgOpts.get(ProgOpts.OptKeys.MARKDOWN).equals("1")) {
+                        // include link for markdown
+                        str += left(getLabel(objects.get(r)) + " ([" + getId(objects.get(r)) + "]" + "(" + objects.get(r) + "))", CHAR_NUMBER);
+                    } else {
+                        str += left(getLabel(objects.get(r)) + " (" + getId(objects.get(r)) + ")", CHAR_NUMBER);
+                    }
                 } else {
                     str += left(Integer.toString(objects.size()), CHAR_NUMBER);
                 }
@@ -186,6 +196,9 @@ public class FeatureComparison {
     }
 
     public static String right(String text, int n) {
+        if (ProgOpts.get(ProgOpts.OptKeys.MARKDOWN).equals("1")) {
+            return text;
+        }
         if (text.length() > n + 1) {
             return text.substring(0, n);
         } else {
@@ -194,6 +207,9 @@ public class FeatureComparison {
     }
 
     public static String left(String text, int n) {
+        if (ProgOpts.get(ProgOpts.OptKeys.MARKDOWN).equals("1")) {
+            return text;
+        }
         if (text.length() > n + 1) {
             return text.substring(0, n);
         } else {

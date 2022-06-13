@@ -284,24 +284,33 @@ public class ComparisonTable {
             }
         }
 
+        // table header
         line();
         System.out.print("| " + FeatureComparison.right("Features", FeatureComparison.CHAR_NUMBER));
         for (String entity : entities) {
-            System.out.print(" | " + FeatureComparison.left(FeatureComparison.getLabel(entity) + " (" + FeatureComparison.getId(entity) + ")", FeatureComparison.CHAR_NUMBER));
+            if (ProgOpts.get(OptKeys.MARKDOWN).equals("1")) {
+                // include link for markdown
+                System.out.print(" | " + FeatureComparison.left(FeatureComparison.getLabel(entity) + " ([" + FeatureComparison.getId(entity) + "]" + "(" + entity + "))", FeatureComparison.CHAR_NUMBER));
+            } else {
+                System.out.print(" | " + FeatureComparison.left(FeatureComparison.getLabel(entity) + " (" + FeatureComparison.getId(entity) + ")", FeatureComparison.CHAR_NUMBER));
+            }
         }
-        System.out.println(" |");
         if (ProgOpts.get(OptKeys.MARKDOWN).equals("1")) {
+            System.out.println(" | CRL");
             for (int i = 0; i <= entities.size(); i++) {
                 System.out.print("|---");
             }
             System.out.println("|---"); // final column for crl
         }
+
+        // table entries
         line();
         for (FeatureComparison fc : featureComparisons) {
             fc.show(entities);
             line();
         }
 
+        // additional info
         System.out.println("\n* Duration: "
                 + TimeUnit.MILLISECONDS.toSeconds(enddate.getTime() - startdate.getTime()) + " seconds "
                 + "(" + startdate + " - " + enddate + ")");
