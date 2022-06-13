@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,6 +15,7 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import org.apache.jena.query.QuerySolution;
 import org.apache.log4j.Logger;
@@ -265,7 +268,14 @@ public class ComparisonTable {
         if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
             String id;
             String label;
-            String outfilename = ProgOpts.get(OptKeys.DIRECTORY) + "/";
+            String hostname = "";
+            try {
+                hostname = new URL(Versus.ENDPOINT).getHost();
+                hostname = hostname.replace(".", "-");
+            } catch (MalformedURLException ex) {
+                logger.error(ex, ex);
+            }
+            String outfilename = ProgOpts.get(OptKeys.DIRECTORY) + "/" + hostname + "__";
             for (String entity : entities) {
                 id = FeatureComparison.getId(entity);
                 label = FeatureComparison.getLabel(entity).replaceAll("[^a-zA-Z0-9_-]+", "-");
