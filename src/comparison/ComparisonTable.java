@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import org.apache.jena.query.QuerySolution;
 import org.apache.log4j.Logger;
@@ -28,7 +28,7 @@ import options.ProgOpts.OptKeys;
 
 public class ComparisonTable {
 
-    private static Logger logger = Logger.getLogger(ComparisonTable.class);
+    private static final Logger logger = Logger.getLogger(ComparisonTable.class);
 
     private ArrayList<String> entities = new ArrayList<String>();
     private HashMap<ComplexProperty, Property> properties = new HashMap<ComplexProperty, Property>();
@@ -50,7 +50,7 @@ public class ComparisonTable {
         }
     }
 
-    public ComparisonTable versus(String entity) {
+    public ComparisonTable versus(String entity) throws InterruptedException {
         logger.info("adding " + entity + " to versus list");
         String uri = entity;
         if (!uri.startsWith("http")) {
@@ -62,7 +62,7 @@ public class ComparisonTable {
         return this;
     }
 
-    private void populate(String entity) {
+    private void populate(String entity) throws InterruptedException {
         try {
             new SparqlQuerier("select ?p ?o where {<" + entity + "> ?p ?o}", Versus.ENDPOINT) {
 
@@ -92,10 +92,13 @@ public class ComparisonTable {
             }.execute();
         } catch (InterruptedException e) {
             logger.error(e, e);
+            if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                throw e;
+            }
         }
     }
 
-    private void populateInverse(String entity) {
+    private void populateInverse(String entity) throws InterruptedException {
         try {
             new SparqlQuerier("select ?p ?o where {?o ?p <" + entity + ">}", Versus.ENDPOINT) {
 
@@ -125,10 +128,13 @@ public class ComparisonTable {
             }.execute();
         } catch (InterruptedException e) {
             logger.error(e, e);
+            if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                throw e;
+            }
         }
     }
 
-    public void generate(double threshold) {
+    public void generate(double threshold) throws InterruptedException {
         logger.info("================================");
         logger.info("comparing entities: " + String.join(", ", entities));
         startdate = new Date();
@@ -140,7 +146,7 @@ public class ComparisonTable {
         System.out.println(enddate);
     }
 
-    private void selectFeatureComparisons(double threshold) {
+    private void selectFeatureComparisons(double threshold) throws InterruptedException {
         Collections.sort(contexts, new Comparator<Context>() {
             @Override
             public int compare(Context o1, Context o2) {
@@ -178,7 +184,7 @@ public class ComparisonTable {
         }
     }
 
-    private void computeContexts() {
+    private void computeContexts() throws InterruptedException {
         for (Entry<ComplexProperty, Property> property : properties.entrySet()) {
             contexts.addAll(property.getValue().getContexts(entities.size()));
         }
@@ -206,7 +212,7 @@ public class ComparisonTable {
         }
     }
 
-    private int contextualCount(ArrayList<Context> c, int index) {
+    private int contextualCount(ArrayList<Context> c, int index) throws InterruptedException {
         String queryStr = "";
         for (int i = 0; i < c.size(); i++) {
             if (i != index) {
@@ -237,6 +243,9 @@ public class ComparisonTable {
 
         } catch (InterruptedException e) {
             logger.error(e, e);
+            if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                throw e;
+            }
         }
         return count;
     }
@@ -261,11 +270,11 @@ public class ComparisonTable {
         properties.put(cp, p);
     }
 
-    public void show() {
+    public void show() throws InterruptedException {
 
         // if output shall go to file, redirect System.out to it
         PrintStream console = System.out;   // store current System.out in case we write to file below
-        if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
+        if (ProgOpts.get(OptKeys.WRITE_FILE).equals("1")) {
             String id;
             String label;
             String hostname = "";
@@ -281,7 +290,10 @@ public class ComparisonTable {
                 label = FeatureComparison.getLabel(entity).replaceAll("[^a-zA-Z0-9_-]+", "-");
                 outfilename += id + "--" + label + "__";
             }
-            outfilename += ProgOpts.get(OptKeys.THRESHOLD);
+            outfilename += ProgOpts.get(OptKeys.THRESHOLD) + "__";
+            outfilename += "errors-" + Versus.getErrorNumber() + "__";
+            outfilename += Instant.now().getEpochSecond();
+
             if (ProgOpts.get(OptKeys.MARKDOWN).equals("0")) {
                 outfilename += ".txt";
             } else {
@@ -325,15 +337,18 @@ public class ComparisonTable {
         }
 
         // additional info
-        System.out.println("\n* Duration: "
+        System.out.println("");
+        System.out.println("* Threshold/Gamma: " + ProgOpts.get(OptKeys.THRESHOLD));
+        System.out.println("* Duration: "
                 + TimeUnit.MILLISECONDS.toSeconds(enddate.getTime() - startdate.getTime()) + " seconds "
                 + "(" + startdate + " - " + enddate + ")");
-
-        System.out.println("* #Errors: " + Versus.getErrorNumber());
         System.out.println("* #Queries: " + Versus.getQueryNumber());
-        System.out.println("* Threshold/Gamma: " + ProgOpts.get(OptKeys.THRESHOLD));
+        System.out.println("* #Errors: " + Versus.getErrorNumber());
+        if (Versus.getErrorNumber() > 0) {
+            System.out.println("\t* " + String.join("\n\t* ", Versus.error_queries));
+        }
 
-        if (ProgOpts.get(OptKeys.FILE_OUTPUT).equals("1")) {
+        if (ProgOpts.get(OptKeys.WRITE_FILE).equals("1")) {
             // restore System.out in case it had been changed
             System.setOut(console);
         }

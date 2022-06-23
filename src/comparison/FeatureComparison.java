@@ -49,7 +49,7 @@ public class FeatureComparison {
         featureEntities.put(entity, fe);
     }
 
-    public void computeProbabilityAdvancedPruning(ArrayList<Context> contexts, double threshold) {
+    public void computeProbabilityAdvancedPruning(ArrayList<Context> contexts, double threshold) throws InterruptedException {
         probability = 1;
         double optimistic = 1;
         ArrayList<FeatureEntity> fes = new ArrayList<FeatureEntity>();
@@ -115,7 +115,7 @@ public class FeatureComparison {
                 + "]";
     }
 
-    public void show(ArrayList<String> entities) {
+    public void show(ArrayList<String> entities) throws InterruptedException {
         int max = 1;
         for (String entity : entities) {
             ArrayList<String> objects = entityObjects.get(entity);
@@ -133,7 +133,7 @@ public class FeatureComparison {
         }
     }
 
-    public String row(ArrayList<String> entities, int r, boolean numerical) {
+    public String row(ArrayList<String> entities, int r, boolean numerical) throws InterruptedException {
         String str = "| ";
         if (r == 0) {
             if (ProgOpts.get(ProgOpts.OptKeys.MARKDOWN).equals("1")) {
@@ -166,7 +166,7 @@ public class FeatureComparison {
         return str;
     }
 
-    public static String getLabel(String uri) {
+    public static String getLabel(String uri) throws InterruptedException {
         String label = SparqlQuerier.getLabel(uri, Versus.ENDPOINT);
         if (label == null) {
             return "";

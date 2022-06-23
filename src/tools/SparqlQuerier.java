@@ -127,20 +127,30 @@ public abstract class SparqlQuerier {
                 if (qexec != null) {
                     long tempo = 10000;
                     long sumTempo = 0;
-                    boolean done = false;
+                    int tries = 0;
+                    int query_retries_max = Integer.parseInt(ProgOpts.get(ProgOpts.OptKeys.QUERY_RETRIES_MAX));
                     ResultSet resultSet = null;
-                    do {
+                    while (true) {
                         try {
                             resultSet = qexec.execSelect();
-                            done = true;
+                            break;
                         } catch (Exception e) {
-                            Versus.incrementErrorNumber();
                             logger.warn(e + " => " + tempo + " (" + queryId + ") " + queryStr);
-                            logger.error("abort query" + " (" + queryId + ")");
-                            done = true;
+                            if (tries++ >= query_retries_max) {
+                                logger.error("abort query" + " (" + queryId + ")");
+                                logger.warn("reached maximum  tries: " + query_retries_max);
+                                Versus.incrementErrorNumber();
+                                Versus.error_queries.add("`" + queryStr + "`");
+                                if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                                    throw new InterruptedException("Stopping on reaching 'query_retries_max'");
+                                }
+                                break;
+                            }
+                            logger.warn("abort query, start retry #" + tries + " (" + queryId + ")");
+                            //done = true;
                             //throw e;
                         }
-                    } while (!done);
+                    }
                     status = SparqlStatus.RECEIVE;
                     if (resultSet != null) {
                         while (resultSet.hasNext()) {
@@ -189,7 +199,9 @@ public abstract class SparqlQuerier {
         return status;
     }
 
+    @Deprecated
     public void safeExecute(long millis) throws InterruptedException {
+        // not used at the moment
         Thread t = new Thread(new Runnable() {
 
             @Override
@@ -199,6 +211,7 @@ public abstract class SparqlQuerier {
                 } catch (InterruptedException e) {
                     close();
                     logger.info(e);
+
                 }
             }
 
@@ -213,7 +226,7 @@ public abstract class SparqlQuerier {
         }
     }
 
-    public static int getInDegree(String uri, String triplestore) {
+    public static int getInDegree(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select (COUNT(*) AS ?number) where {?s ?p <" + uri + ">}", triplestore) {
 
             private int inDegree;
@@ -232,11 +245,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public int getInDegree() {
+            public int getInDegree() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return inDegree;
             }
@@ -244,7 +260,7 @@ public abstract class SparqlQuerier {
         }.getInDegree();
     }
 
-    public static String getLabel(String uri, String triplestore) {
+    public static String getLabel(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select ?label where {<" + uri + "> <http://www.w3.org/2000/01/rdf-schema#label> ?label. FILTER(LANG(?label) = \"en\")}", triplestore) {
 
             private String label;
@@ -263,11 +279,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public String getLabel() {
+            public String getLabel() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return label;
             }
@@ -275,7 +294,7 @@ public abstract class SparqlQuerier {
         }.getLabel();
     }
 
-    public static String getInverseLabel(String uri, String triplestore) {
+    public static String getInverseLabel(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select ?label where {<" + uri + "> <http://www.wikidata.org/prop/direct/P7087> ?o . ?o <http://www.w3.org/2000/01/rdf-schema#label> ?label. FILTER(LANG(?label) = \"en\")}", triplestore) {
 
             private String label;
@@ -294,11 +313,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public String getLabel() {
+            public String getLabel() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return label;
             }
@@ -306,7 +328,7 @@ public abstract class SparqlQuerier {
         }.getLabel();
     }
 
-    public static String getDescription(String uri, String triplestore) {
+    public static String getDescription(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select ?description where {<" + uri + "> <http://schema.org/description> ?description. FILTER(LANG(?description) = \"en\")}", triplestore) {
 
             private String description;
@@ -325,11 +347,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public String getDescription() {
+            public String getDescription() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return description;
             }
@@ -337,7 +362,7 @@ public abstract class SparqlQuerier {
         }.getDescription();
     }
 
-    public static String getDomain(String uri, String triplestore) {
+    public static String getDomain(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select * where {select ?c (count(*) as ?nb) where {select ?s ?c where {?s <" + uri + "> ?o . ?s <http://www.wikidata.org/prop/direct/P31> ?c} limit 1000} group by ?c order by desc(?nb) limit 1}", triplestore) {
 
             private String domain;
@@ -356,11 +381,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public String getDomain() {
+            public String getDomain() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return domain;
             }
@@ -368,7 +396,7 @@ public abstract class SparqlQuerier {
         }.getDomain();
     }
 
-    public static String getRange(String uri, String triplestore) {
+    public static String getRange(String uri, String triplestore) throws InterruptedException {
         return new SparqlQuerier("select * where {select ?c (count(*) as ?nb) where {select ?s ?c where {?s <" + uri + "> ?o . ?o <http://www.wikidata.org/prop/direct/P31> ?c} limit 1000} group by ?c order by desc(?nb) limit 1}", triplestore) {
 
             private String range;
@@ -387,11 +415,14 @@ public abstract class SparqlQuerier {
                 return true;
             }
 
-            public String getRange() {
+            public String getRange() throws InterruptedException {
                 try {
                     execute();
                 } catch (InterruptedException e) {
                     logger.error(e, e);
+                    if (ProgOpts.get(ProgOpts.OptKeys.STOP_ON_ERRORS).equals("1")) {
+                        throw e;
+                    }
                 }
                 return range;
             }
