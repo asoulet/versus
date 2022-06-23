@@ -14,7 +14,7 @@ public class VersusTest {
         logger.info(Versus.NAME + " " + Versus.VERSION);
 
         // parse program options
-        args = ProgOpts.commandLineOptions(args);
+        args = ProgOpts.parseOptions(args);
         double threshold = Double.parseDouble(ProgOpts.get(OptKeys.THRESHOLD));
         Versus.ENDPOINT = ProgOpts.get(OptKeys.ENDPOINT);
         logger.info("endpoint: '" + ProgOpts.get(OptKeys.ENDPOINT) + "'");

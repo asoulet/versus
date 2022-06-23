@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
+import options.ProgOpts;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -18,7 +19,7 @@ import versus.Versus;
 
 public abstract class SparqlQuerier {
 
-    private static Logger logger = Logger.getLogger(SparqlQuerier.class);
+    private static final Logger logger = Logger.getLogger(SparqlQuerier.class);
 
     protected int limit = 10000;
     protected int offset = 0;
@@ -57,9 +58,9 @@ public abstract class SparqlQuerier {
         } catch (IOException e) {
             logger.error(e, e);
         }
-        readTimeout = Integer.parseInt(properties.getProperty("read_timeout")) * 1000;
-        connectTimeout = Integer.parseInt(properties.getProperty("connect_timeout")) * 1000;
-        fairUseDelay = Integer.parseInt(properties.getProperty("fair_use_delay"));
+        readTimeout = Integer.parseInt(ProgOpts.get(ProgOpts.OptKeys.READ_TIMEOUT)) * 1000;
+        connectTimeout = Integer.parseInt(ProgOpts.get(ProgOpts.OptKeys.CONNECT_TIMEOUT)) * 1000;
+        fairUseDelay = Integer.parseInt(ProgOpts.get(ProgOpts.OptKeys.FAIR_USE_DELAY));
         logger.info("fairUseDelay " + fairUseDelay);
     }
 
